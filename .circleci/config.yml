@@ -1,0 +1,31 @@
+version: 2.1
+jobs:
+  build-and-test:
+    docker:
+      - image: cimg/python:3.9
+    steps:
+      - checkout
+      - run: make deps
+      - run: make lint
+      - run: make test
+
+  docker_build_push:
+    docker:
+      - image: cimg/base:stable
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Build and Push to Docker Hub
+          command: |
+            echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USER" --password-stdin
+            docker build -t fjanowski0/moja-aplikacja:latest .
+            docker push fjanowski0/moja-aplikacja:latest
+
+workflows:
+  main_workflow:
+    jobs:
+      - build-and-test
+      - docker_build_push:
+          requires:
+            - build-and-test
