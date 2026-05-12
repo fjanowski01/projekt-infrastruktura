@@ -1,4 +1,22 @@
-docker_build_push:
+version: 2.1
+
+jobs:
+  build-and-test:
+    docker:
+      - image: cimg/python:3.9
+    steps:
+      - checkout
+      - run:
+          name: Install dependencies
+          command: make deps
+      - run:
+          name: Run linter
+          command: make lint
+      - run:
+          name: Run tests
+          command: make test
+
+  docker_build_push:
     docker:
       - image: cimg/python:3.9
     steps:
@@ -11,4 +29,12 @@ docker_build_push:
             echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USER" --password-stdin
             docker build -t $DOCKERHUB_USER/moja-aplikacja:latest .
             docker push $DOCKERHUB_USER/moja-aplikacja:latest
+
+workflows:
+  main_workflow:
+    jobs:
+      - build-and-test
+      - docker_build_push:
+          requires:
+            - build-and-test
 
